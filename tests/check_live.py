@@ -73,6 +73,14 @@ def main():
         if not st['saved']:
             fails.append('localStorage persistence does not work on the live site')
 
+        # retired fields must be gone from the document (target team + measurable outcome)
+        ptext = pg.evaluate("() => document.getElementById('fit').innerText")
+        for bad in ('ทีมเป้าหมาย', 'Target team', '0.4% → 0.01%', 'Duplicate-payment errors'):
+            if bad in ptext:
+                fails.append(f'retired content is still rendered: {bad!r}')
+        if 'ออกแบบ idempotency' not in ptext:
+            fails.append('project description is missing from the document')
+
         pdf = pg.pdf(format='A4', print_background=True, prefer_css_page_size=True)
         (OUT / 'live.pdf').write_bytes(pdf)
         try:

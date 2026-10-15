@@ -119,9 +119,6 @@ button.ghost{background:transparent}
 .pj:last-child{margin-bottom:0}
 .pj .nm{font-weight:600; font-size:9.5pt}
 .pj .ds{font-size:8.8pt; color:var(--ink-2)}
-.pj .im{font-size:8.8pt; color:var(--accent-ink); margin-top:.6mm; display:flex; gap:1.4mm; align-items:baseline}
-.pj .im::before{content:""; width:0; height:0; border-left:1.6mm solid var(--accent);
-  border-top:.9mm solid transparent; border-bottom:.9mm solid transparent; transform:translateY(-.15mm)}
 .chips{display:flex; flex-wrap:wrap; gap:1.4mm}
 .chip{font-size:8.4pt; border:1px solid var(--line); border-radius:3px; padding:.6mm 1.8mm; color:var(--ink-2); background:#fafbfc}
 .str{display:flex; flex-direction:column; gap:1.6mm; margin:0; padding:0; list-style:none}
@@ -204,7 +201,7 @@ function blankLang(){ return {
   email:'', phone:'', line:'', portfolio:''
 };}
 function blankExp(){ return {company:'', role:'', period:'', points:''}; }
-function blankProject(){ return {name:'', desc:'', impact:''}; }
+function blankProject(){ return {name:'', desc:''}; }
 function blank(){ const o={}; LANGS.forEach(l=>o[l]=blankLang()); return o; }
 
 const SECTIONS = [
@@ -223,8 +220,8 @@ const SECTIONS = [
   ]},
   {key:'projects', num:'02', th:'โปรเจกต์เด่น', en:'Highlight projects', repeat:'projects', addTh:'+ เพิ่มโปรเจกต์', max:3, fields:[
     {k:'name',   t:'text', th:'ชื่อโปรเจกต์', en:'Project name'},
-    {k:'desc',   t:'area', rows:2, th:'ทำอะไร / บทบาทของคุณ', en:'What it was / your role'},
-    {k:'impact', t:'text', th:'ผลลัพธ์ (วัดได้)', en:'Outcome (measurable)'}
+    {k:'desc',   t:'area', rows:3, th:'รายละเอียดโปรเจกต์ / บทบาทของคุณ', en:'Project detail / your role',
+     hint:'เล่ารายละเอียดงานได้เต็มที่ ไม่ต้องมีตัวเลขผลลัพธ์'}
   ]},
   {key:'skills', num:'03', th:'ทักษะ', en:'Skills', fields:[
     {k:'skills', t:'area', rows:3, th:'ทักษะ', en:'Skills', hint:'1 บรรทัด = 1 ทักษะ'}
@@ -233,8 +230,7 @@ const SECTIONS = [
     {k:'strengths', t:'area', rows:3, th:'จุดแข็ง', en:'Strengths', hint:'ใส่ไม่เกิน 3 บรรทัด'}
   ]},
   {key:'path', num:'05', th:'ความสนใจ / เส้นทางที่อยากไป', en:'Interests / career path', fields:[
-    {k:'path', t:'area', rows:3, th:'ความสนใจ & เส้นทาง', en:'Interests & path'},
-    {k:'targetTeams', t:'text', th:'ทีมเป้าหมายที่อยากย้ายไป', en:'Target team(s)'}
+    {k:'path', t:'area', rows:4, th:'ความสนใจ & เส้นทาง', en:'Interests & path'}
   ]},
   {key:'contact', num:'', th:'ช่องทางติดต่อ', en:'Contact', fields:[
     {k:'email', t:'text', th:'อีเมล', en:'Email'},
@@ -255,7 +251,12 @@ function merge(base, incoming){
   LANGS.forEach(l=>{
     const b = base[l], i = (incoming && incoming[l]) || {};
     Object.keys(b).forEach(k=>{
-      if(Array.isArray(b[k])) b[k] = (Array.isArray(i[k]) && i[k].length) ? i[k].map(x=>Object.assign({}, x)) : b[k];
+      if(Array.isArray(b[k])){
+        const proto = b[k][0] || {};
+        b[k] = (Array.isArray(i[k]) && i[k].length)
+          ? i[k].map(x=>{ const o={}; Object.keys(proto).forEach(kk=>{ o[kk] = (x && typeof x[kk]==='string') ? x[kk] : ''; }); return o; })
+          : b[k];
+      }
       else if(typeof b[k] === 'object' && b[k]) b[k] = Object.assign({}, b[k], i[k]||{});
       else if(typeof i[k] !== 'undefined') b[k] = i[k];
     });
@@ -387,8 +388,8 @@ function lines(v){ return String(v||'').split('\n').map(x=>x.trim()).filter(Bool
 function renderPreview(){
   const d = data[lang];
   const t = lang==='th'
-    ? {kick:'สรุปประสบการณ์ · เอกสารภายใน', exp:'ประสบการณ์ทำงาน', pj:'โปรเจกต์เด่น', sk:'ทักษะ', st:'จุดแข็ง', path:'ความสนใจ / เส้นทาง', target:'ทีมเป้าหมาย', empty:'— เริ่มพิมพ์ทางซ้าย เพื่อดูเอกสารจริงหน้านี้ —'}
-    : {kick:'Career summary · internal document', exp:'Experience', pj:'Highlight projects', sk:'Skills', st:'Strengths', path:'Interests / path', target:'Target team', empty:'— start typing on the left to see the live document —'};
+    ? {kick:'สรุปประสบการณ์ · เอกสารภายใน', exp:'ประสบการณ์ทำงาน', pj:'โปรเจกต์เด่น', sk:'ทักษะ', st:'จุดแข็ง', path:'ความสนใจ / เส้นทาง', empty:'— เริ่มพิมพ์ทางซ้าย เพื่อดูเอกสารจริงหน้านี้ —'}
+    : {kick:'Career summary · internal document', exp:'Experience', pj:'Highlight projects', sk:'Skills', st:'Strengths', path:'Interests / path', empty:'— start typing on the left to see the live document —'};
 
   const contacts = [d.email,d.phone,d.line,d.portfolio].map(x=>String(x||'').trim()).filter(Boolean);
   const hasAny = (d.name||d.role||d.team||d.headline||contacts.length||lines(d.skills).length);
@@ -404,8 +405,7 @@ function renderPreview(){
 
   const pjHTML = d.projects.filter(p=>p.name||p.desc).map(p=>`<div class="pj">
       <div class="nm">${esc(p.name||'')}</div>
-      ${p.desc?`<div class="ds">${esc(p.desc)}</div>`:''}
-      ${p.impact?`<div class="im"><span>${esc(p.impact)}</span></div>`:''}
+      ${p.desc?`<div class="ds">${esc(p.desc).replace(/\n/g,'<br>')}</div>`:''}
     </div>`).join('');
 
   const skills = lines(d.skills);
@@ -434,7 +434,6 @@ function renderPreview(){
         </div>
         <div class="sec-d" data-sec="path"><h4><span class="n">05</span>${t.path}</h4>
           ${lines(d.path).length?`<div class="body">${lines(d.path).map(l=>esc(l)).join('<br>')}</div>`:'<div class="body">—</div>'}
-          ${d.targetTeams?`<div class="kv">${t.target}: <b>${esc(d.targetTeams)}</b></div>`:''}
         </div>
       </div>
     </div>`;
@@ -538,15 +537,12 @@ const DEMO = {
          points:'รีไรต์ระบบบิลล์จาก monolith → service ย่อย ลด cost server 30%\nดูแลทีม 3 คน ส่งงานตรงเวลา 100% ของ sprint'}
       ],
       projects:[
-        {name:'ระบบ payment gateway ภายใน', desc:'ออกแบบ idempotency + retry ให้รองรับ 5,000 TPS',
-         impact:'ผิดพลาดรายการซ้ำ 0.4% → 0.01%'},
-        {name:'Observability stack', desc:'รวม log/metric/trace เป็นชุดเดียวทั้งบริษัท',
-         impact:'เวลา debug เหตุการณ์ 2 ชม. → 15 นาที'}
+        {name:'ระบบ payment gateway ภายใน', desc:'ออกแบบ idempotency + retry ให้รองรับ 5,000 TPS และทำ runbook ให้ทีมอื่นดูแลต่อได้'},
+        {name:'Observability stack', desc:'รวม log/metric/trace เป็นชุดเดียวทั้งบริษัท พร้อม dashboard ประจำทีม'}
       ],
       skills:'Go, Python, PostgreSQL, Redis, Docker, Kubernetes\nระบบ queue (NATS/Kafka), CI/CD (GitHub Actions)',
       strengths:'แก้ปัญหาจาก root cause ไม่ patch ปลายเหตุ\nอธิบายงานเทคนิคให้คนไม่เทคนิคเข้าใจได้\nชอบทำเอกสารและ handover ให้ทีมอื่นใช้ต่อ',
       path:'อยากขยับไปสาย Solutions Architecture — ออกแบบระบบภาพรวม ตัดสินใจ trade-off และดูแลตั้งแต่ต้นจน deploy',
-      targetTeams:'Platform / SRE / Solutions Architecture',
       email:'somchai.example@example.com', phone:'08x-xxx-xxxx', line:'@example', portfolio:'github.com/example'},
   en:{name:'Somchai Sample', role:'Senior Backend Engineer', team:'Platform Engineering · Sample',
       headline:'Backend engineer running services for ~100k daily users, focused on performance and reliability',
@@ -557,15 +553,12 @@ const DEMO = {
          points:'Broke a billing monolith into services, cutting server cost 30%\nLed 3 engineers, 100% of sprints delivered on time'}
       ],
       projects:[
-        {name:'Internal payment gateway', desc:'Idempotency and retry design for 5,000 TPS',
-         impact:'Duplicate-payment errors 0.4% → 0.01%'},
-        {name:'Observability stack', desc:'Unified logging, metrics and tracing company-wide',
-         impact:'Incident debugging time 2 h → 15 min'}
+        {name:'Internal payment gateway', desc:'Idempotency and retry design for 5,000 TPS, plus a runbook the team can own'},
+        {name:'Observability stack', desc:'Unified logging, metrics and tracing company-wide with per-team dashboards'}
       ],
       skills:'Go, Python, PostgreSQL, Redis, Docker, Kubernetes\nQueues (NATS/Kafka), CI/CD (GitHub Actions)',
       strengths:'Fixes root causes instead of patching symptoms\nExplains technical work to non-technical stakeholders\nDocuments and hands over work so other teams can build on it',
       path:'Moving toward Solutions Architecture — system-level design, trade-off decisions, and ownership from design to deploy',
-      targetTeams:'Platform / SRE / Solutions Architecture',
       email:'somchai.example@example.com', phone:'08x-xxx-xxxx', line:'@example', portfolio:'github.com/example'}
 };
 
