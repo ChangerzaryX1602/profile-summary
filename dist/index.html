@@ -270,12 +270,15 @@ function merge(base, incoming){
   return base;
 }
 let saveTimer = null;
+let dirty = false;                 // only a page that actually edited something may flush on unload —
+                                   // otherwise a stale tab would overwrite fresher data (or a test's injected data)
 const saveStateEl = document.getElementById('saveState');
 function stamp(){ return new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit', second:'2-digit'}); }
 function saveNow(){
   clearTimeout(saveTimer); saveTimer = null;
   try{
     localStorage.setItem(LS_KEY, JSON.stringify(data));
+    dirty = false;
     if(saveStateEl){ saveStateEl.classList.remove('warn'); saveStateEl.textContent = 'บันทึกแล้ว ' + stamp(); }
     return true;
   }catch(e){
@@ -285,10 +288,11 @@ function saveNow(){
 }
 function save(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 200); }
 // never lose the last keystrokes: flush on tab hide / unload / blur
-window.addEventListener('pagehide', saveNow);
-window.addEventListener('beforeunload', saveNow);
-document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') saveNow(); });
-window.addEventListener('blur', saveNow);
+const flush = () => { if(dirty) saveNow(); };
+window.addEventListener('pagehide', flush);
+window.addEventListener('beforeunload', flush);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') flush(); });
+window.addEventListener('blur', flush);
 let previewTimer = null;
 function schedulePreview(){ clearTimeout(previewTimer); previewTimer = setTimeout(renderPreview, 70); }
 /* bind paths: flat sections store their fields at the top level of the language
@@ -351,12 +355,12 @@ editor.addEventListener('click', e=>{
   if(t.dataset.add){
     const s = SECTIONS.find(x=>x.key===t.dataset.add);
     const blankItem = s.key==='exp'?blankExp():blankProject();
-    data[lang][s.key].push(blankItem); renderEditor(); renderPreview(); save(); return;
+    data[lang][s.key].push(blankItem); dirty = true; renderEditor(); renderPreview(); saveNow(); return;
   }
   if(t.dataset.del){
     const k = t.dataset.del, i = +t.dataset.i;
     data[lang][k].splice(i,1); if(!data[lang][k].length) data[lang][k].push(k==='exp'?blankExp():blankProject());
-    renderEditor(); renderPreview(); save(); return;
+    dirty = true; renderEditor(); renderPreview(); saveNow(); return;
   }
   if(t.dataset.copy){
     const path = t.dataset.copy;
@@ -369,6 +373,7 @@ editor.addEventListener('click', e=>{
 editor.addEventListener('input', e=>{
   const el = e.target.closest('[data-bind]'); if(!el) return;
   setPath(data[lang], el.dataset.bind, el.value);
+  dirty = true;
   save(); schedulePreview();          // preview follows the keystroke; storage follows 200 ms later
 });
 editor.addEventListener('change', e=>{ if(e.target.closest('[data-bind]')) saveNow(); });
@@ -378,7 +383,7 @@ function flash(btn, msg){ const old=btn.textContent; btn.textContent=msg; setTim
 document.getElementById('btnCopyAll').addEventListener('click', ()=>{
   const src = JSON.parse(JSON.stringify(data.th));
   data.en = merge(JSON.parse(JSON.stringify(blankLang())), src).en || src;
-  data.en = src; save(); renderEditor(); renderPreview();
+  data.en = src; dirty = true; saveNow(); renderEditor(); renderPreview();
   alert('คัดลอกข้อความไทย » ช่อง EN ทั้งชุดแล้ว (แก้ถ้อยคำอังกฤษต่อได้เลย)');
 });
 
@@ -517,16 +522,16 @@ document.getElementById('btnImport').addEventListener('click', ()=>document.getE
 document.getElementById('fileIn').addEventListener('change', e=>{
   const f = e.target.files[0]; if(!f) return;
   const r = new FileReader();
-  r.onload = ()=>{ try{ data = merge(blank(), JSON.parse(r.result)); save(); renderEditor(); renderPreview(); alert('นำเข้าข้อมูลแล้ว'); }catch(err){ alert('ไฟล์ JSON ไม่ถูกต้อง'); } };
+  r.onload = ()=>{ try{ data = merge(blank(), JSON.parse(r.result)); dirty = true; saveNow(); renderEditor(); renderPreview(); alert('นำเข้าข้อมูลแล้ว'); }catch(err){ alert('ไฟล์ JSON ไม่ถูกต้อง'); } };
   r.readAsText(f); e.target.value='';
 });
 document.getElementById('btnClear').addEventListener('click', ()=>{
   if(!confirm('ลบข้อมูลทั้งหมดในเบราว์เซอร์นี้? (แนะนำให้กด “บันทึก JSON” เก็บไว้ก่อน)')) return;
-  localStorage.removeItem(LS_KEY); data = blank(); renderEditor(); renderPreview();
+  localStorage.removeItem(LS_KEY); dirty = false; data = blank(); renderEditor(); renderPreview(); if(saveStateEl){ saveStateEl.textContent = 'ล้างข้อมูลแล้ว'; }
 });
 document.getElementById('btnDemo').addEventListener('click', ()=>{
   if(!confirm('ใส่ข้อมูลตัวอย่าง (สมมติ) ทับข้อมูลปัจจุบัน?')) return;
-  data = merge(blank(), DEMO); save(); renderEditor(); renderPreview();
+  data = merge(blank(), DEMO); dirty = true; saveNow(); renderEditor(); renderPreview();
 });
 
 /* demo = fictional data (clearly not real) */
