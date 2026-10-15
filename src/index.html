@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Career Summary 1-Page — แบบฟอร์มสรุปประสบการณ์</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{
+  --ink:#14161a; --ink-2:#3d434d; --ink-3:#6b7280;
+  --line:#dce0e6; --line-2:#eef1f5; --paper:#fff; --accent:#1f4eff; --accent-ink:#0b2ea8;
+  --bg:#f4f5f7; --warn:#b45309; --warn-bg:#fff7ed; --ok:#0f7b4f;
+  --s:1; /* auto-fit scale */
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'IBM Plex Sans Thai',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- toolbar ---------- */
+.bar{
+  position:sticky; top:0; z-index:20; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  padding:10px 16px; background:#fff; border-bottom:1px solid var(--line);
+}
+.bar .brand{font-weight:600; letter-spacing:.02em; margin-right:auto; display:flex; align-items:center; gap:8px}
+.bar .brand i{display:inline-block; width:8px; height:8px; background:var(--accent); border-radius:50%}
+button{font:inherit; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink);
+  padding:7px 12px; border-radius:6px; line-height:1}
+button:hover{border-color:#c3c9d2}
+button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+button.primary:hover{background:var(--accent-ink); border-color:var(--accent-ink)}
+button.danger{color:#b42318; border-color:#e6c9c5}
+button.ghost{background:transparent}
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden}
+.seg button{border:0; border-radius:0; padding:7px 14px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink); color:#fff}
+
+/* ---------- warn bar ---------- */
+.warn{display:none; gap:10px; align-items:flex-start; margin:12px 16px 0; padding:10px 14px;
+  background:var(--warn-bg); border:1px solid #f2d5b3; border-left:3px solid var(--warn); border-radius:6px; color:#7c2d12}
+.warn.show{display:flex}
+.warn b{color:var(--warn)}
+.warn .x{margin-left:auto; background:none; border:0; color:#9a3412; font-size:16px; padding:0 4px}
+
+/* ---------- layout ---------- */
+.wrap{display:grid; grid-template-columns:minmax(340px,42%) 1fr; gap:16px; padding:16px; align-items:start}
+@media (max-width:1100px){ .wrap{grid-template-columns:1fr} }
+
+/* ---------- editor ---------- */
+.editor{background:#fff; border:1px solid var(--line); border-radius:8px; padding:0 0 20px}
+.editor .tabs{display:flex; border-bottom:1px solid var(--line); padding:8px 14px 0; gap:6px}
+.editor .tabs button{border:0; border-bottom:2px solid transparent; border-radius:0; color:var(--ink-3); font-weight:600}
+.editor .tabs button[aria-pressed="true"]{color:var(--ink); border-bottom-color:var(--accent)}
+.sec{border-bottom:1px solid var(--line-2); padding:14px}
+.sec:last-child{border-bottom:0}
+.sec > h3{margin:0 0 10px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); display:flex; gap:8px; align-items:center}
+.sec > h3 .n{font-variant-numeric:tabular-nums; color:var(--accent); font-weight:600}
+.f{margin-bottom:10px}
+.f:last-child{margin-bottom:0}
+.f label{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:12px; color:var(--ink-2); margin-bottom:4px}
+.f input[type=text], .f input[type=email], .f textarea{
+  width:100%; font:inherit; padding:7px 9px; border:1px solid var(--line); border-radius:5px; background:#fcfcfd; color:var(--ink);
+}
+.f input:focus, .f textarea:focus{outline:2px solid #cddaff; border-color:var(--accent); background:#fff}
+.f textarea{resize:vertical; min-height:38px; line-height:1.45}
+.f .hint{font-size:11px; color:var(--ink-3)}
+.copyen{font-size:10px; padding:2px 6px; border-radius:4px; color:var(--accent-ink); border-color:#cddaff; background:#f5f8ff}
+.item{border:1px solid var(--line); border-radius:6px; padding:10px; margin-bottom:10px; background:#fcfcfd}
+.item .ih{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px}
+.item .ih span{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3)}
+.item .ih button{padding:3px 8px; font-size:11px}
+.add{width:100%; border-style:dashed; color:var(--ink-3)}
+.listhint{font-size:11px; color:var(--ink-3); margin:-4px 0 8px}
+
+/* ---------- A4 sheet ---------- */
+.preview{position:sticky; top:60px; overflow:auto; max-height:calc(100vh - 80px); padding:4px 4px 24px}
+.sheetwrap{display:flex; justify-content:center}
+.sheet{
+  width:210mm; height:297mm; background:var(--paper); overflow:hidden; position:relative;
+  box-shadow:0 6px 28px rgba(16,20,28,.14); border:1px solid #e6e9ee;
+}
+.fit{width:calc(100% / var(--s)); min-height:100%; padding:12mm; transform:scale(var(--s)); transform-origin:top left}
+/* technical tone */
+.doc-head{border-bottom:1px solid var(--ink); padding-bottom:5mm; margin-bottom:5mm; position:relative}
+.doc-head .kick{font-size:8.5pt; letter-spacing:.22em; text-transform:uppercase; color:var(--accent); font-weight:600}
+.doc-head h1{margin:1.5mm 0 0; font-size:20pt; line-height:1.12; font-weight:600; letter-spacing:-.01em}
+.doc-head .sub{margin-top:1.5mm; font-size:9.5pt; color:var(--ink-2)}
+.doc-head .sub b{color:var(--ink); font-weight:600}
+.doc-contact{margin-top:2.5mm; display:flex; flex-wrap:wrap; gap:0 4mm; font-size:8.5pt; color:var(--ink-2)}
+.doc-contact span{white-space:nowrap}
+.doc-contact span::before{content:""; display:inline-block; width:3px; height:3px; background:var(--accent); border-radius:50%; margin-right:2mm; vertical-align:middle}
+.cols{display:grid; grid-template-columns:1.35fr 1fr; gap:0}
+.colL{padding-right:6mm; border-right:1px solid var(--line)}
+.colR{padding-left:6mm}
+.sec-d{margin-bottom:4.5mm}
+.sec-d > h4{
+  margin:0 0 2.2mm; font-size:8.5pt; letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
+  display:flex; align-items:baseline; gap:2mm; border-bottom:1px solid var(--line); padding-bottom:1.2mm;
+}
+.sec-d > h4 .n{color:var(--accent); font-weight:600; font-variant-numeric:tabular-nums}
+.exp{margin-bottom:3.2mm}
+.exp:last-child{margin-bottom:0}
+.exp .row{display:flex; justify-content:space-between; gap:3mm; align-items:baseline}
+.exp .co{font-weight:600; font-size:10pt}
+.exp .per{font-size:8pt; color:var(--ink-3); white-space:nowrap; font-variant-numeric:tabular-nums}
+.exp .rl{font-size:8.5pt; color:var(--accent-ink); margin-top:.4mm}
+.exp ul{margin:1.2mm 0 0; padding-left:3.6mm; list-style:none}
+.exp ul li{font-size:9pt; color:var(--ink-2); margin-bottom:.7mm; position:relative}
+.exp ul li::before{content:""; position:absolute; left:-3.6mm; top:1.55mm; width:1.6mm; height:1px; background:var(--ink-3)}
+.pj{margin-bottom:3mm}
+.pj:last-child{margin-bottom:0}
+.pj .nm{font-weight:600; font-size:9.5pt}
+.pj .ds{font-size:8.8pt; color:var(--ink-2)}
+.pj .im{font-size:8.8pt; color:var(--accent-ink); margin-top:.6mm; display:flex; gap:1.4mm; align-items:baseline}
+.pj .im::before{content:""; width:0; height:0; border-left:1.6mm solid var(--accent);
+  border-top:.9mm solid transparent; border-bottom:.9mm solid transparent; transform:translateY(-.15mm)}
+.chips{display:flex; flex-wrap:wrap; gap:1.4mm}
+.chip{font-size:8.4pt; border:1px solid var(--line); border-radius:3px; padding:.6mm 1.8mm; color:var(--ink-2); background:#fafbfc}
+.str{display:flex; flex-direction:column; gap:1.6mm; margin:0; padding:0; list-style:none}
+.str li{font-size:9pt; color:var(--ink-2); padding-left:4.6mm; position:relative}
+.str li::before{content:attr(data-i); position:absolute; left:0; top:0; font-size:7.5pt; font-weight:600; color:var(--accent)}
+.body{font-size:9pt; color:var(--ink-2); margin:0}
+.kv{font-size:8.8pt; color:var(--ink-2); margin-top:1mm}
+.kv b{color:var(--ink); font-weight:600}
+.empty-doc{color:#9aa1ab; font-size:10pt; font-style:normal}
+/* tighten steps applied by auto-fit */
+.sheet.tight .sec-d{margin-bottom:3.4mm}
+.sheet.tight .doc-head{padding-bottom:3.6mm; margin-bottom:3.6mm}
+.sheet.tight .exp{margin-bottom:2.4mm}
+.sheet.tighter .sec-d{margin-bottom:2.6mm}
+.sheet.tighter .doc-head{padding-bottom:2.8mm; margin-bottom:2.8mm}
+.sheet.tighter .exp{margin-bottom:1.8mm}
+.sheet.tighter .chip{padding:.3mm 1.4mm}
+.sheet.tighter .exp ul li{margin-bottom:.3mm}
+
+/* ---------- print ---------- */
+@page{ size:A4; margin:0 }
+@media print{
+  body{background:#fff}
+  .bar,.editor,.warn,.hintbar{display:none !important}
+  .wrap{display:block; padding:0; margin:0}
+  .preview{position:static; overflow:visible; max-height:none; padding:0; margin:0}
+  .sheetwrap{display:block}
+  .sheet{width:210mm; height:297mm; box-shadow:none; border:0; margin:0}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="brand"><i></i> Career Summary · 1-Page A4</div>
+  <div class="seg" role="group" aria-label="ภาษา">
+    <button id="langTh" aria-pressed="true">ไทย</button>
+    <button id="langEn" aria-pressed="false">EN</button>
+  </div>
+  <button class="primary" id="btnPrint">⬇ Export PDF (A4)</button>
+  <button id="btnCopyAll">คัดลอกไทย » EN ทั้งชุด</button>
+  <button id="btnJson">บันทึก JSON</button>
+  <button id="btnImport">นำเข้า JSON</button>
+  <button id="btnDemo" class="ghost">ใส่ข้อมูลตัวอย่าง</button>
+  <button id="btnClear" class="danger">ล้างข้อมูลในเครื่อง</button>
+  <input type="file" id="fileIn" accept=".json,application/json" hidden>
+</div>
+
+<div class="warn" id="warn" role="status">
+  <div>
+    <b id="warnTitle">ข้อมูลล้นหน้า A4</b>
+    <div id="warnBody"></div>
+  </div>
+  <button class="x" id="warnClose" aria-label="ปิด">✕</button>
+</div>
+
+<div class="wrap">
+  <section class="editor" id="editor"></section>
+  <section class="preview">
+    <div class="sheetwrap">
+      <div class="sheet" id="sheet">
+        <div class="fit" id="fit"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ============================ data ============================ */
+const LS_KEY = 'hermes.careerSummary.v1';
+const LANGS = ['th','en'];
+const LANG_LABEL = {th:'ภาษาไทย', en:'English'};
+
+function blankLang(){ return {
+  name:'', role:'', team:'', headline:'',
+  exp:[blankExp()],
+  projects:[blankProject()],
+  skills:'', strengths:'', path:'', targetTeams:'',
+  email:'', phone:'', line:'', portfolio:''
+};}
+function blankExp(){ return {company:'', role:'', period:'', points:''}; }
+function blankProject(){ return {name:'', desc:'', impact:''}; }
+function blank(){ const o={}; LANGS.forEach(l=>o[l]=blankLang()); return o; }
+
+const SECTIONS = [
+  {key:'basic', num:'', th:'ข้อมูลพื้นฐาน', en:'Basics', fields:[
+    {k:'name',  t:'text',     th:'ชื่อ–นามสกุล', en:'Full name'},
+    {k:'role',  t:'text',     th:'ตำแหน่งปัจจุบัน', en:'Current role'},
+    {k:'team',  t:'text',     th:'ทีม / ฝ่าย', en:'Team / Department'},
+    {k:'headline', t:'area', rows:2, th:'สรุปสั้น 2 บรรทัด (ไม่ใส่ก็ได้)', en:'Short summary, 2 lines (optional)'}
+  ]},
+  {key:'exp', num:'01', th:'ประสบการณ์ทำงาน', en:'Experience', repeat:'exp', addTh:'+ เพิ่มประสบการณ์', max:4, fields:[
+    {k:'company', t:'text', th:'บริษัท / หน่วยงาน', en:'Company'},
+    {k:'role',    t:'text', th:'ตำแหน่ง', en:'Role'},
+    {k:'period',  t:'text', th:'ช่วงเวลา (เช่น 2566–ปัจจุบัน)', en:'Period (e.g. 2023–present)'},
+    {k:'points',  t:'area', rows:3, th:'ผลงาน / ความรับผิดชอบ', en:'Achievements / scope',
+     hint:'1 บรรทัด = 1 ข้อ · ใส่ตัวเลขที่วัดได้ถ้ามี'}
+  ]},
+  {key:'projects', num:'02', th:'โปรเจกต์เด่น', en:'Highlight projects', repeat:'projects', addTh:'+ เพิ่มโปรเจกต์', max:3, fields:[
+    {k:'name',   t:'text', th:'ชื่อโปรเจกต์', en:'Project name'},
+    {k:'desc',   t:'area', rows:2, th:'ทำอะไร / บทบาทของคุณ', en:'What it was / your role'},
+    {k:'impact', t:'text', th:'ผลลัพธ์ (วัดได้)', en:'Outcome (measurable)'}
+  ]},
+  {key:'skills', num:'03', th:'ทักษะ', en:'Skills', fields:[
+    {k:'skills', t:'area', rows:3, th:'ทักษะ', en:'Skills', hint:'1 บรรทัด = 1 ทักษะ'}
+  ]},
+  {key:'strengths', num:'04', th:'จุดแข็ง 3 ข้อ', en:'Top 3 strengths', fields:[
+    {k:'strengths', t:'area', rows:3, th:'จุดแข็ง', en:'Strengths', hint:'ใส่ไม่เกิน 3 บรรทัด'}
+  ]},
+  {key:'path', num:'05', th:'ความสนใจ / เส้นทางที่อยากไป', en:'Interests / career path', fields:[
+    {k:'path', t:'area', rows:3, th:'ความสนใจ & เส้นทาง', en:'Interests & path'},
+    {k:'targetTeams', t:'text', th:'ทีมเป้าหมายที่อยากย้ายไป', en:'Target team(s)'}
+  ]},
+  {key:'contact', num:'', th:'ช่องทางติดต่อ', en:'Contact', fields:[
+    {k:'email', t:'text', th:'อีเมล', en:'Email'},
+    {k:'phone', t:'text', th:'เบอร์โทร', en:'Phone'},
+    {k:'line',  t:'text', th:'LINE ID', en:'LINE ID'},
+    {k:'portfolio', t:'text', th:'ลิงก์ผลงาน / GitHub / เว็บ', en:'Portfolio / GitHub / site'}
+  ]}
+];
+
+let lang = 'th';
+let data = load();
+
+function load(){
+  try{ const raw = localStorage.getItem(LS_KEY); if(raw){ const d = JSON.parse(raw); return merge(blank(), d); } }catch(e){}
+  return blank();
+}
+function merge(base, incoming){
+  LANGS.forEach(l=>{
+    const b = base[l], i = (incoming && incoming[l]) || {};
+    Object.keys(b).forEach(k=>{
+      if(Array.isArray(b[k])) b[k] = (Array.isArray(i[k]) && i[k].length) ? i[k].map(x=>Object.assign({}, x)) : b[k];
+      else if(typeof b[k] === 'object' && b[k]) b[k] = Object.assign({}, b[k], i[k]||{});
+      else if(typeof i[k] !== 'undefined') b[k] = i[k];
+    });
+  });
+  return base;
+}
+let saveTimer = null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ try{ localStorage.setItem(LS_KEY, JSON.stringify(data)); }catch(e){} }, 250);
+}
+
+/* ============================ editor ============================ */
+const editor = document.getElementById('editor');
+function renderEditor(){
+  const L = data[lang];
+  let h = `<div class="tabs">
+      <button data-tab="th" aria-pressed="${lang==='th'}">ไทย</button>
+      <button data-tab="en" aria-pressed="${lang==='en'}">EN</button>
+      <span style="margin-left:auto;font-size:11px;color:var(--ink-3);align-self:center">กำลังแก้: ${LANG_LABEL[lang]}</span>
+    </div>`;
+  SECTIONS.forEach(s=>{
+    h += `<div class="sec"><h3>${s.num?`<span class="n">${s.num}</span>`:''}${lang==='th'?s.th:s.en}</h3>`;
+    if(s.repeat){
+      h += `<div class="listhint">สูงสุด ${s.max} รายการ · เรียงจากใหม่ → เก่า</div>`;
+      L[s.key].forEach((it,idx)=>{ h += itemHTML(s, it, idx, L[s.key].length); });
+      if(L[s.key].length < s.max) h += `<button class="add" data-add="${s.key}">${s.addTh}</button>`;
+    } else {
+      s.fields.forEach(f=>{ h += fieldHTML(s.key, f, L[f.k]); });
+    }
+    h += `</div>`;
+  });
+  editor.innerHTML = h;
+}
+function fieldHTML(sectionKey, f, val){
+  const label = lang==='th'?f.th:f.en;
+  const hint = f.hint?`<span class="hint">${f.hint}</span>`:'';
+  const copyBtn = (f.t==='text'||f.t==='area') && lang==='th'
+    ? `<button class="copyen" data-copy="${sectionKey}.${f.k}" title="คัดลอกค่านี้ไปช่อง EN">TH » EN</button>` : '';
+  const input = f.t==='area'
+    ? `<textarea rows="${f.rows||3}" data-bind="${sectionKey}.${f.k}">${esc(val)}</textarea>`
+    : `<input type="text" data-bind="${sectionKey}.${f.k}" value="${esc(val)}">`;
+  return `<div class="f"><label><span>${label} ${hint}</span>${copyBtn}</label>${input}</div>`;
+}
+function itemHTML(s, it, idx, total){
+  const title = (lang==='th'?'รายการ':'Item') + ' ' + (idx+1);
+  let h = `<div class="item"><div class="ih"><span>${title}</span>${total>1?`<button class="danger" data-del="${s.key}" data-i="${idx}">ลบ</button>`:''}</div>`;
+  s.fields.forEach(f=>{ h += fieldHTML(s.key, f, it[f.k], idx); });
+  return h + `</div>`;
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+editor.addEventListener('click', e=>{
+  const t = e.target.closest('button'); if(!t) return;
+  if(t.dataset.tab){ lang = t.dataset.tab; renderEditor(); renderPreview(); updateLangButtons(); return; }
+  if(t.dataset.add){
+    const s = SECTIONS.find(x=>x.key===t.dataset.add);
+    const blankItem = s.key==='exp'?blankExp():blankProject();
+    data[lang][s.key].push(blankItem); renderEditor(); renderPreview(); save(); return;
+  }
+  if(t.dataset.del){
+    const k = t.dataset.del, i = +t.dataset.i;
+    data[lang][k].splice(i,1); if(!data[lang][k].length) data[lang][k].push(k==='exp'?blankExp():blankProject());
+    renderEditor(); renderPreview(); save(); return;
+  }
+  if(t.dataset.copy){
+    const [sec,k] = t.dataset.copy.split('.');
+    const v = data.th[sec][k]; data.en[sec][k] = v; save(); renderEditor(); renderPreview();
+    flash(t, 'คัดลอกแล้ว'); return;
+  }
+});
+editor.addEventListener('input', e=>{
+  const el = e.target.closest('[data-bind]'); if(!el) return;
+  const [sec,k] = el.dataset.bind.split('.');
+  data[lang][sec][k] = el.value; save(); renderPreview();
+});
+function flash(btn, msg){ const old=btn.textContent; btn.textContent=msg; setTimeout(()=>btn.textContent=old, 900); }
+
+/* copy whole TH tree -> EN */
+document.getElementById('btnCopyAll').addEventListener('click', ()=>{
+  const src = JSON.parse(JSON.stringify(data.th));
+  data.en = merge(JSON.parse(JSON.stringify(blankLang())), src).en || src;
+  data.en = src; save(); renderEditor(); renderPreview();
+  alert('คัดลอกข้อความไทย » ช่อง EN ทั้งชุดแล้ว (แก้ถ้อยคำอังกฤษต่อได้เลย)');
+});
+
+/* ============================ preview ============================ */
+const fitEl = document.getElementById('fit');
+function lines(v){ return String(v||'').split('\n').map(x=>x.trim()).filter(Boolean); }
+
+function renderPreview(){
+  const d = data[lang];
+  const t = lang==='th'
+    ? {kick:'สรุปประสบการณ์ · เอกสารภายใน', exp:'ประสบการณ์ทำงาน', pj:'โปรเจกต์เด่น', sk:'ทักษะ', st:'จุดแข็ง', path:'ความสนใจ / เส้นทาง', target:'ทีมเป้าหมาย', empty:'— เริ่มพิมพ์ทางซ้าย เพื่อดูเอกสารจริงหน้านี้ —'}
+    : {kick:'Career summary · internal document', exp:'Experience', pj:'Highlight projects', sk:'Skills', st:'Strengths', path:'Interests / path', target:'Target team', empty:'— start typing on the left to see the live document —'};
+
+  const contacts = [d.email,d.phone,d.line,d.portfolio].map(x=>String(x||'').trim()).filter(Boolean);
+  const hasAny = (d.name||d.role||d.team||d.headline||contacts.length||lines(d.skills).length);
+
+  const expHTML = d.exp.filter(e=>e.company||e.role||e.points).map(e=>{
+    const pts = lines(e.points);
+    return `<div class="exp">
+      <div class="row"><span class="co">${esc(e.company||'')}</span><span class="per">${esc(e.period||'')}</span></div>
+      ${e.role?`<div class="rl">${esc(e.role)}</div>`:''}
+      ${pts.length?`<ul>${pts.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`:''}
+    </div>`;
+  }).join('');
+
+  const pjHTML = d.projects.filter(p=>p.name||p.desc).map(p=>`<div class="pj">
+      <div class="nm">${esc(p.name||'')}</div>
+      ${p.desc?`<div class="ds">${esc(p.desc)}</div>`:''}
+      ${p.impact?`<div class="im"><span>${esc(p.impact)}</span></div>`:''}
+    </div>`).join('');
+
+  const skills = lines(d.skills);
+  const strengths = lines(d.strengths).slice(0,3);
+
+  fitEl.innerHTML = `
+    <div class="doc-head">
+      <div class="kick">${t.kick}</div>
+      <h1>${esc(d.name||(lang==='th'?'ชื่อ–นามสกุล':'Full name'))}</h1>
+      <div class="sub"><b>${esc(d.role||'')}</b>${d.role&&d.team?' · ':''}${esc(d.team||'')}</div>
+      ${d.headline?`<div class="sub" style="margin-top:1mm">${esc(d.headline)}</div>`:''}
+      ${contacts.length?`<div class="doc-contact">${contacts.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
+    </div>
+    ${hasAny?'':`<div class="empty-doc">${t.empty}</div>`}
+    <div class="cols">
+      <div class="colL">
+        <div class="sec-d" data-sec="exp"><h4><span class="n">01</span>${t.exp}</h4>${expHTML||'<div class="body">—</div>'}</div>
+        <div class="sec-d" data-sec="pj"><h4><span class="n">02</span>${t.pj}</h4>${pjHTML||'<div class="body">—</div>'}</div>
+      </div>
+      <div class="colR">
+        <div class="sec-d" data-sec="sk"><h4><span class="n">03</span>${t.sk}</h4>
+          ${skills.length?`<div class="chips">${skills.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>`:'<div class="body">—</div>'}
+        </div>
+        <div class="sec-d" data-sec="st"><h4><span class="n">04</span>${t.st}</h4>
+          ${strengths.length?`<ul class="str">${strengths.map((s,i)=>`<li data-i="${i+1}.">${esc(s)}</li>`).join('')}</ul>`:'<div class="body">—</div>'}
+        </div>
+        <div class="sec-d" data-sec="path"><h4><span class="n">05</span>${t.path}</h4>
+          ${lines(d.path).length?`<div class="body">${lines(d.path).map(l=>esc(l)).join('<br>')}</div>`:'<div class="body">—</div>'}
+          ${d.targetTeams?`<div class="kv">${t.target}: <b>${esc(d.targetTeams)}</b></div>`:''}
+        </div>
+      </div>
+    </div>`;
+  autoFit();
+}
+
+/* ============================ auto-fit ============================ */
+const sheet = document.getElementById('sheet');
+const warnEl = document.getElementById('warn');
+const MIN = 0.70, MAX = 1.00, STEP = 0.02;
+let fitState = {scale:1, overflow:0, sections:[]};
+
+function setScale(s){
+  sheet.style.setProperty('--s', s.toFixed(3));
+  sheet.classList.toggle('tight', s <= 0.94 && s > 0.86);
+  sheet.classList.toggle('tighter', s <= 0.86);
+  // force layout
+  void fitEl.offsetHeight;
+}
+function overflows(){ return fitEl.getBoundingClientRect().height > sheet.getBoundingClientRect().height + 0.5; }
+
+function autoFit(){
+  setScale(MAX);
+  let chosen = MAX;
+  if(overflows()){
+    for(let s = MAX - STEP; s >= MIN - 1e-9; s -= STEP){
+      setScale(s);
+      if(!overflows()){ chosen = s; break; }
+      chosen = s;
+    }
+  }
+  const sheetH = sheet.getBoundingClientRect().height;
+  const fitH = fitEl.getBoundingClientRect().height;
+  const over = Math.max(0, fitH - sheetH);
+  const pxPerMm = sheetH / 297;
+  fitState = {scale:chosen, overflow:over, sections:[]};
+  if(over > 1){
+    fitEl.querySelectorAll('.sec-d').forEach(sec=>{
+      const h = sec.getBoundingClientRect().height;
+      fitState.sections.push({id:sec.dataset.sec, h, share:fitH>0?h/fitH:0});
+    });
+    showWarn(over/pxPerMm, chosen);
+  } else {
+    warnEl.classList.remove('show');
+  }
+}
+function showWarn(overMm, scale){
+  const names = {exp:'01 ประสบการณ์', pj:'02 โปรเจกต์เด่น', sk:'03 ทักษะ', st:'04 จุดแข็ง', path:'05 ความสนใจ/เส้นทาง'};
+  const top = fitState.sections.slice().sort((a,b)=>b.share-a.share).slice(0,3)
+    .map(s=>`${names[s.id]||s.id} (${Math.round(s.share*100)}% ของพื้นที่)`).join(' · ');
+  document.getElementById('warnTitle').textContent =
+    `ยังล้นหน้า A4 อีก ~${overMm.toFixed(0)} มม. แม้ย่อฟอนต์ถึง ${Math.round(scale*100)}% แล้ว`;
+  document.getElementById('warnBody').textContent =
+    `ส่วนที่กินพื้นที่มากสุด: ${top} — แนะนำตัด 1–2 บรรทัดจากส่วนบนสุดนี้ (ระบบไม่ตัดข้อมูลให้เอง)`;
+  warnEl.classList.add('show');
+}
+document.getElementById('warnClose').addEventListener('click', ()=>warnEl.classList.remove('show'));
+
+/* ============================ toolbar actions ============================ */
+function updateLangButtons(){
+  document.getElementById('langTh').setAttribute('aria-pressed', String(lang==='th'));
+  document.getElementById('langEn').setAttribute('aria-pressed', String(lang==='en'));
+  document.documentElement.lang = lang;
+}
+document.getElementById('langTh').addEventListener('click', ()=>{ lang='th'; updateLangButtons(); renderEditor(); renderPreview(); });
+document.getElementById('langEn').addEventListener('click', ()=>{ lang='en'; updateLangButtons(); renderEditor(); renderPreview(); });
+
+document.getElementById('btnPrint').addEventListener('click', ()=>{ autoFit(); setTimeout(()=>window.print(), 60); });
+
+document.getElementById('btnJson').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  const nm = (data[lang].name||'career-summary').replace(/\s+/g,'-');
+  a.href = URL.createObjectURL(blob); a.download = `career-summary-${nm}.json`; a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById('btnImport').addEventListener('click', ()=>document.getElementById('fileIn').click());
+document.getElementById('fileIn').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try{ data = merge(blank(), JSON.parse(r.result)); save(); renderEditor(); renderPreview(); alert('นำเข้าข้อมูลแล้ว'); }catch(err){ alert('ไฟล์ JSON ไม่ถูกต้อง'); } };
+  r.readAsText(f); e.target.value='';
+});
+document.getElementById('btnClear').addEventListener('click', ()=>{
+  if(!confirm('ลบข้อมูลทั้งหมดในเบราว์เซอร์นี้? (แนะนำให้กด “บันทึก JSON” เก็บไว้ก่อน)')) return;
+  localStorage.removeItem(LS_KEY); data = blank(); renderEditor(); renderPreview();
+});
+document.getElementById('btnDemo').addEventListener('click', ()=>{
+  if(!confirm('ใส่ข้อมูลตัวอย่าง (สมมติ) ทับข้อมูลปัจจุบัน?')) return;
+  data = merge(blank(), DEMO); save(); renderEditor(); renderPreview();
+});
+
+/* demo = fictional data (clearly not real) */
+const DEMO = {
+  th:{name:'สมชาย ตัวอย่าง', role:'Senior Backend Engineer', team:'Platform Engineering · ตัวอย่าง',
+      headline:'ดูแลระบบ backend ที่มีผู้ใช้หลักแสนคน/วัน โฟกัส performance และ reliability',
+      exp:[
+        {company:'บริษัท ตัวอย่าง จำกัด', role:'Senior Backend Engineer', period:'2566–ปัจจุบัน',
+         points:'ออกแบบ queue-based pipeline ลดเวลา process จาก 40 นาที → 6 นาที (ลด 85%)\nดูแล API 12 บริการ uptime 99.95% ตลอดปี\nนำ CI/CD + test coverage จาก 30% → 78%'},
+        {company:'บริษัท สมมติ จำกัด', role:'Backend Developer', period:'2563–2566',
+         points:'รีไรต์ระบบบิลล์จาก monolith → service ย่อย ลด cost server 30%\nดูแลทีม 3 คน ส่งงานตรงเวลา 100% ของ sprint'}
+      ],
+      projects:[
+        {name:'ระบบ payment gateway ภายใน', desc:'ออกแบบ idempotency + retry ให้รองรับ 5,000 TPS',
+         impact:'ผิดพลาดรายการซ้ำ 0.4% → 0.01%'},
+        {name:'Observability stack', desc:'รวม log/metric/trace เป็นชุดเดียวทั้งบริษัท',
+         impact:'เวลา debug เหตุการณ์ 2 ชม. → 15 นาที'}
+      ],
+      skills:'Go, Python, PostgreSQL, Redis, Docker, Kubernetes\nระบบ queue (NATS/Kafka), CI/CD (GitHub Actions)',
+      strengths:'แก้ปัญหาจาก root cause ไม่ patch ปลายเหตุ\nอธิบายงานเทคนิคให้คนไม่เทคนิคเข้าใจได้\nชอบทำเอกสารและ handover ให้ทีมอื่นใช้ต่อ',
+      path:'อยากขยับไปสาย Solutions Architecture — ออกแบบระบบภาพรวม ตัดสินใจ trade-off และดูแลตั้งแต่ต้นจน deploy',
+      targetTeams:'Platform / SRE / Solutions Architecture',
+      email:'somchai.example@example.com', phone:'08x-xxx-xxxx', line:'@example', portfolio:'github.com/example'},
+  en:{name:'Somchai Sample', role:'Senior Backend Engineer', team:'Platform Engineering · Sample',
+      headline:'Backend engineer running services for ~100k daily users, focused on performance and reliability',
+      exp:[
+        {company:'Sample Co., Ltd.', role:'Senior Backend Engineer', period:'2023–present',
+         points:'Designed a queue-based pipeline, cutting processing time 40 min → 6 min (−85%)\nOwned 12 APIs at 99.95% uptime for the year\nRaised CI/CD test coverage from 30% → 78%'},
+        {company:'Mock Co., Ltd.', role:'Backend Developer', period:'2020–2023',
+         points:'Broke a billing monolith into services, cutting server cost 30%\nLed 3 engineers, 100% of sprints delivered on time'}
+      ],
+      projects:[
+        {name:'Internal payment gateway', desc:'Idempotency and retry design for 5,000 TPS',
+         impact:'Duplicate-payment errors 0.4% → 0.01%'},
+        {name:'Observability stack', desc:'Unified logging, metrics and tracing company-wide',
+         impact:'Incident debugging time 2 h → 15 min'}
+      ],
+      skills:'Go, Python, PostgreSQL, Redis, Docker, Kubernetes\nQueues (NATS/Kafka), CI/CD (GitHub Actions)',
+      strengths:'Fixes root causes instead of patching symptoms\nExplains technical work to non-technical stakeholders\nDocuments and hands over work so other teams can build on it',
+      path:'Moving toward Solutions Architecture — system-level design, trade-off decisions, and ownership from design to deploy',
+      targetTeams:'Platform / SRE / Solutions Architecture',
+      email:'somchai.example@example.com', phone:'08x-xxx-xxxx', line:'@example', portfolio:'github.com/example'}
+};
+
+/* ============================ boot ============================ */
+renderEditor(); updateLangButtons(); renderPreview();
+window.addEventListener('resize', ()=>autoFit());
+window.addEventListener('beforeprint', ()=>autoFit());
+if(window.location.hash === '#demo'){ data = merge(blank(), DEMO); renderEditor(); renderPreview(); }
+</script>
+</body>
+</html>
