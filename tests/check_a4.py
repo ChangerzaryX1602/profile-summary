@@ -17,24 +17,48 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 EXTREME = {
   "th": {"name":"ทดสอบ ข้อมูลยาวมาก","role":"Engineer","team":"Team","headline":"ทดสอบการย่ออัตโนมัติเมื่อข้อมูลเยอะเกินหนึ่งหน้า",
-         "projects":[{"name":f"โปรเจกต์ {i}","desc":"รายละเอียดโปรเจกต์ที่ยาวมาก " * 30} for i in range(1,9)],
-         "skills":"\n".join([f"ทักษะที่ {i}" for i in range(1,40)]),
+         "projects":[{"name":f"โปรเจกต์ {i}","desc":"รายละเอียดโปรเจกต์ที่ยาวมาก " * 60} for i in range(1,13)],
+         "skills":"\n".join([f"ทักษะที่ {i}" for i in range(1,60)]),
          "strengths":"จุดแข็งหนึ่ง\nจุดแข็งสอง\nจุดแข็งสาม",
-         "path":"เส้นทางที่อยากไป " * 25,
+         "path":"เส้นทางที่อยากไป " * 45,
          "email":"a@b.com","phone":"0800000000","line":"@x","portfolio":"github.com/x"},
   "en": {"name":"Extreme Test","role":"Engineer","team":"Team","headline":"Auto-fit behaviour under heavy content load",
-         "projects":[{"name":f"Project {i}","desc":"A very long project description " * 30} for i in range(1,9)],
-         "skills":"\n".join([f"Skill {i}" for i in range(1,40)]),
+         "projects":[{"name":f"Project {i}","desc":"A very long project description " * 60} for i in range(1,13)],
+         "skills":"\n".join([f"Skill {i}" for i in range(1,60)]),
          "strengths":"Strength one\nStrength two\nStrength three",
-         "path":"Career direction " * 25,
+         "path":"Career direction " * 45,
          "email":"a@b.com","phone":"0800000000","line":"@x","portfolio":"github.com/x"},
 }
+
+SIX_NAME = 'ทดสอบ หกโปรเจกต์'
+SIX_PROJECTS = [
+    {"name": "Home Network Agent (current employer)",
+     "desc": "Architected and delivered a Thai voice-controlled home network agent: Go backend, MQTT device control,\n"
+             "web dashboard, Aliyun/AISF SDK integration for FTTR, Thai ASR/TTS, ESP32 and shift-register LED board.\n"
+             "Ran integration tests with Huawei R&D HQ and owned deployment, access control and security."},
+    {"name": "Fibre3 Smart Home Application (current employer)",
+     "desc": "Supported the Smart Home application through QA: triaged defects, explained technical detail to QA,\n"
+             "drove fixes with vendors and internal teams, and validated on site at AIS Tower 2 including NAS testing."},
+    {"name": "KKU Healthy Life — Season 5 & 6",
+     "desc": "Backend (Go, Fiber v2) for an exercise-to-rewards platform used by staff across the university;\n"
+             "then DevOps in Season 6: self-hosted deployment, CI/CD pipeline, reverse proxy and hardening."},
+    {"name": "KKU Document Management System",
+     "desc": "Backend (Go) replacing paper-based official document workflows: numbered documents, inbox/outbox,\n"
+             "receive/send/reply/forward/classified handling and RBAC via bitwise operations; in production at KKU."},
+    {"name": "PI E-Billing and E-Payment Platform",
+     "desc": "Backend (Go) for tuition and fee billing: billing runs and reports, plus reconciliation of\n"
+             "bank statement files to update payment status automatically."},
+    {"name": "KKU GS Admission",
+     "desc": "Admissions platform for KKU Graduate School (master's and doctoral applications): backend (Go)\n"
+             "and DevOps for build and deployment."},
+]
+
 
 def pages_of(pdf_bytes):
     try:
         import io, pypdf
         r = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-        txt = r.pages[0].extract_text() or ''
+        txt = re.sub(r'\s+', ' ', r.pages[0].extract_text() or '')   # wraps inside words/names -> normalise
         fonts = set()
         try:
             for f in r.pages[0]['/Resources']['/Font'].values():
@@ -119,6 +143,49 @@ def main():
         sD, nD, txtD = export('D-special-chars', 'ทดสอบ')
         for ch in ['฿','→','»','•','←','↑','·']:
             if ch not in txtD: fails.append(f'D-special-chars: {ch!r} lost in the PDF text layer')
+
+        # ---- case E: six real projects (the layout the user actually wants) ----
+        SIX = {
+          "th": {"name": SIX_NAME, "role": "Backend / DevOps Engineer", "team": "ตัวอย่าง",
+                 "headline": "โปรเจกต์จริง 6 รายการ ต้องพอดี 1 หน้า A4",
+                 "projects": SIX_PROJECTS,
+                 "skills": "Go, Fiber, MQTT, Docker, CI/CD\nRedis, PostgreSQL",
+                 "strengths": "จุดแข็งหนึ่ง\nจุดแข็งสอง\nจุดแข็งสาม",
+                 "path": "สนใจ Infrastructure / Network และการประยุกต์ AI กับงานประจำวัน",
+                 "email": "a@b.com", "phone": "0800000000", "line": "@x", "portfolio": "github.com/x"},
+          "en": {"name": "Six Projects", "role": "Backend / DevOps Engineer", "team": "Sample",
+                 "headline": "Six real projects must fit one A4 page",
+                 "projects": SIX_PROJECTS,
+                 "skills": "Go, Fiber, MQTT, Docker, CI/CD\nRedis, PostgreSQL",
+                 "strengths": "Strength one\nStrength two\nStrength three",
+                 "path": "Infrastructure / networking, plus applying AI to everyday work",
+                 "email": "a@b.com", "phone": "0800000000", "line": "@x", "portfolio": "github.com/x"},
+        }
+        pg.evaluate("d => localStorage.setItem('hermes.careerSummary.v1', JSON.stringify(d))", SIX)
+        pg.reload(); pg.wait_for_timeout(800)
+        sE, nE, txtE = export('E-six-projects', SIX_NAME)
+        mode = pg.evaluate("() => document.getElementById('sheet').classList.contains('stacked') ? 'single-column' : 'two-column'")
+        print(f"      layout chosen: {mode}, scale {sE['scale']:.2f}, warning={sE['warn']}")
+        if sE['warn']:
+            fails.append('E-six-projects: six projects still do not fit one page (warning shown)')
+        if nE != 1:
+            fails.append(f'E-six-projects: PDF is {nE} pages')
+        for needle in ('Home Network Agent', 'KKU Document Management System', 'PI E-Billing'):
+            if needle not in txtE:
+                fails.append(f'E-six-projects: {needle!r} missing from the document')
+
+        # the single-column fallback (chosen when two columns cannot fit) must still be one page
+        pg.evaluate("() => document.getElementById('sheet').classList.add('stacked')")
+        pg.wait_for_timeout(250)
+        cols = pg.evaluate("() => getComputedStyle(document.querySelector('.cols')).gridTemplateColumns.split(' ').length")
+        print('      stacked fallback: grid columns =', cols)
+        if cols != 1:
+            fails.append('stacked layout did not collapse to a single column (got %s)' % cols)
+        pdfS = pg.pdf(format='A4', print_background=True, prefer_css_page_size=True)
+        nS, txtS, _, _ = pages_of(pdfS)
+        if nS != 1:
+            fails.append('stacked layout produced %s pages' % nS)
+        pg.evaluate("() => document.getElementById('sheet').classList.remove('stacked')")
 
         if errors: fails.append(f'console/page errors: {errors[:5]}')
         b.close()

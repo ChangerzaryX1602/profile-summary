@@ -107,6 +107,13 @@ button.ghost{background:transparent}
 .cols{display:grid; grid-template-columns:1.35fr 1fr; gap:0}
 .colL{padding-right:6mm; border-right:1px solid var(--line)}
 .colR{padding-left:6mm}
+/* auto layout: when two columns cannot fit the content, the whole document
+   stacks into one full-width column (lines wrap less, so many projects fit) */
+.sheet.stacked .cols{grid-template-columns:1fr}
+.sheet.stacked .colL{padding-right:0; border-right:0}
+.sheet.stacked .colR{padding-left:0}
+.sheet.stacked .sec-d{margin-bottom:3.2mm}
+.sheet.stacked .sec-d:last-child{margin-bottom:0}
 .sec-d{margin-bottom:4.5mm}
 .sec-d > h4{
   margin:0 0 2.2mm; font-size:8.5pt; letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
@@ -217,7 +224,7 @@ const SECTIONS = [
     {k:'headline', t:'area', rows:2, th:'สรุปสั้น 2 บรรทัด (ไม่ใส่ก็ได้)', en:'Short summary, 2 lines (optional)'}
   ]},
   {key:'projects', num:'01', th:'โปรเจกต์เด่น', en:'Highlight projects', repeat:'projects',
-   newItem:blankProject, addTh:'+ เพิ่มโปรเจกต์', max:4, fields:[
+   newItem:blankProject, addTh:'+ เพิ่มโปรเจกต์', max:6, fields:[
     {k:'name',   t:'text', th:'ชื่อโปรเจกต์', en:'Project name'},
     {k:'desc',   t:'area', rows:3, th:'รายละเอียดโปรเจกต์ / บทบาทของคุณ', en:'Project detail / your role',
      hint:'เล่ารายละเอียดงานได้เต็มที่ ไม่ต้องมีตัวเลขผลลัพธ์'}
@@ -444,39 +451,48 @@ function setScale(s){
 }
 function overflows(){ return fitEl.getBoundingClientRect().height > sheet.getBoundingClientRect().height + 0.5; }
 
-function autoFit(){
-  setScale(MAX);
-  let chosen = MAX;
-  if(overflows()){
-    for(let s = MAX - STEP; s >= MIN - 1e-9; s -= STEP){
-      setScale(s);
-      if(!overflows()){ chosen = s; break; }
-      chosen = s;
-    }
+function scanLayout(stacked){
+  sheet.classList.toggle('stacked', stacked);
+  for(let s = MAX; s >= MIN - 1e-9; s -= STEP){
+    setScale(s);
+    if(!overflows()) return {stacked, scale:Math.round(s*100)/100, fits:true, over:0};
   }
+  setScale(MIN);
+  const sheetH = sheet.getBoundingClientRect().height, fitH = fitEl.getBoundingClientRect().height;
+  return {stacked, scale:MIN, fits:false, over:Math.max(0, fitH - sheetH)};
+}
+function autoFit(){
+  const two = scanLayout(false);
+  const one = scanLayout(true);
+  const pick = (two.fits && one.fits) ? (two.scale >= one.scale ? two : one)
+             : (two.fits ? two : (one.fits ? one : (two.over <= one.over ? two : one)));
+  sheet.classList.toggle('stacked', pick.stacked);
+  setScale(pick.scale);
+  const chosen = pick.scale;
   const sheetH = sheet.getBoundingClientRect().height;
   const fitH = fitEl.getBoundingClientRect().height;
   const over = Math.max(0, fitH - sheetH);
   const pxPerMm = sheetH / 297;
-  fitState = {scale:chosen, overflow:over, sections:[]};
+  fitState = {scale:chosen, overflow:over, stacked:pick.stacked, sections:[]};
   if(over > 1){
     fitEl.querySelectorAll('.sec-d').forEach(sec=>{
       const h = sec.getBoundingClientRect().height;
       fitState.sections.push({id:sec.dataset.sec, h, share:fitH>0?h/fitH:0});
     });
-    showWarn(over/pxPerMm, chosen);
+    showWarn(over/pxPerMm, chosen, pick.stacked);
   } else {
     warnEl.classList.remove('show');
   }
 }
-function showWarn(overMm, scale){
+function showWarn(overMm, scale, stacked){
   const names = {exp:'01 ประสบการณ์', pj:'02 โปรเจกต์เด่น', sk:'03 ทักษะ', st:'04 จุดแข็ง', path:'05 ความสนใจ/เส้นทาง'};
   const top = fitState.sections.slice().sort((a,b)=>b.share-a.share).slice(0,3)
     .map(s=>`${names[s.id]||s.id} (${Math.round(s.share*100)}% ของพื้นที่)`).join(' · ');
   document.getElementById('warnTitle').textContent =
     `ยังล้นหน้า A4 อีก ~${overMm.toFixed(0)} มม. แม้ย่อฟอนต์ถึง ${Math.round(scale*100)}% แล้ว`;
+  const layout = stacked ? 'คอลัมน์เดียว' : '2 คอลัมน์';
   document.getElementById('warnBody').textContent =
-    `ส่วนที่กินพื้นที่มากสุด: ${top} — แนะนำตัด 1–2 บรรทัดจากส่วนบนสุดนี้ (ระบบไม่ตัดข้อมูลให้เอง)`;
+    `เลย์เอาต์ที่ใช้: ${layout} — ส่วนที่กินพื้นที่มากสุด: ${top} — แนะนำตัด 1–2 บรรทัดจากส่วนบนสุดนี้ (ระบบไม่ตัดข้อมูลให้เอง)`;
   warnEl.classList.add('show');
 }
 document.getElementById('warnClose').addEventListener('click', ()=>warnEl.classList.remove('show'));

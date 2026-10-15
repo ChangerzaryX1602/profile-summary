@@ -101,6 +101,48 @@ def main():
             fails.append(f'live PDF used a system font: {foreign}')
         if 'Somchai' not in txt and 'สมชาย' not in txt:
             fails.append('live PDF text layer does not contain the document text')
+        # ---- six projects on the DEPLOYED site must still print as ONE page ----
+        six = {'th': {'name': 'ทดสอบ หกโปรเจกต์', 'role': 'Backend / DevOps', 'team': 'ทีม',
+                      'headline': 'โปรเจกต์จริง 6 รายการบนเว็บจริง',
+                      'projects': [
+                          {'name': 'Home Network Agent', 'desc': 'Go backend, MQTT device control, Thai ASR/TTS, Aliyun/AISF SDK, ESP32.\nIntegration tested with Huawei R&D HQ; owned deployment, access control and security.'},
+                          {'name': 'Fibre3 Smart Home Application', 'desc': 'QA support and vendor coordination for the Smart Home app;\nvalidated on site at AIS Tower 2 including NAS testing.'},
+                          {'name': 'KKU Healthy Life S5 & S6', 'desc': 'Backend in Go (Fiber v2) for an exercise-to-rewards platform;\nDevOps in S6: self-hosted deploy, CI/CD, reverse proxy, hardening.'},
+                          {'name': 'KKU Document Management System', 'desc': 'Backend in Go replacing paper document workflows: numbered documents,\ninbox/outbox, RBAC via bitwise operations; in production at KKU.'},
+                          {'name': 'PI E-Billing and E-Payment Platform', 'desc': 'Backend in Go for tuition billing, reports and bank-file reconciliation.'},
+                          {'name': 'KKU GS Admission', 'desc': 'Backend and DevOps for KKU Graduate School admissions.'},
+                      ],
+                      'skills': 'Go, Fiber, MQTT, Docker, CI/CD', 'strengths': 'หนึ่ง\nสอง\nสาม',
+                      'path': 'Infrastructure / networking plus AI applied to everyday work',
+                      'email': 'a@b.com', 'phone': '08x', 'line': '@x', 'portfolio': 'github.com/x'}}
+        pg.evaluate("d => localStorage.setItem('hermes.careerSummary.v1', JSON.stringify(d))", six)
+        pg.reload(wait_until='load'); pg.wait_for_timeout(900)
+        st6 = pg.evaluate('''() => ({stacked: document.getElementById('sheet').classList.contains('stacked'),
+            scale: parseFloat(getComputedStyle(document.getElementById('sheet')).getPropertyValue('--s')),
+            warn: document.getElementById('warn').classList.contains('show'),
+            pj: document.querySelectorAll('#fit .pj').length})''')
+        pdf6 = pg.pdf(format='A4', print_background=True, prefer_css_page_size=True)
+        (OUT / 'live-six-projects.pdf').write_bytes(pdf6)
+        try:
+            import io as _io
+            r6 = pypdf.PdfReader(_io.BytesIO(pdf6))
+            n6 = len(r6.pages)
+            t6 = re.sub(r'\s+', ' ', r6.pages[0].extract_text() or '')
+        except ImportError:
+            n6, t6 = len(re.findall(rb'/Type\s*/Page[^s]', pdf6)), ''
+        layout = 'single-column' if st6['stacked'] else 'two-column'
+        print('six projects on live site: blocks=%s layout=%s scale=%.2f warn=%s -> PDF %s page(s)'
+              % (st6['pj'], layout, st6['scale'], st6['warn'], n6))
+        if st6['pj'] != 6:
+            fails.append('live site rendered %s project blocks, expected 6' % st6['pj'])
+        if n6 != 1:
+            fails.append('live six-project PDF is %s pages, expected 1' % n6)
+        for needle in ('Home Network Agent', 'KKU Document Management System', 'PI E-Billing', 'KKU GS Admission'):
+            if needle not in t6:
+                fails.append('live six-project PDF misses %r' % needle)
+        if st6['warn']:
+            fails.append('live six-project document still overflows (warning shown)')
+
         if errs:
             fails.append(f'console errors: {errs[:3]}')
         b.close()
