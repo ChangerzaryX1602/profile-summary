@@ -42,10 +42,10 @@ def main():
         print('sections found:', len(secs))
         for i, s in enumerate(secs):
             print(f'  [{i}] {s["title"].strip()[:34]:<34} binds={s["binds"][:4]}')
-        if len(secs) < 6:
+        if len(secs) < 5:
             print('FAIL: editor did not render all sections'); return 1
 
-        basic, exp, prj, skills = secs[0], secs[1], secs[2], secs[3]
+        basic, prj, skills = secs[0], secs[1], secs[2]
 
         def fill(bind, text):
             el = pg.query_selector(f'[data-bind="{bind}"]')
@@ -56,9 +56,8 @@ def main():
         plan = [
             (basic['binds'][0], 'ทดสอบ ออโต้เซฟ', 'full name'),
             (basic['binds'][1], 'Backend Engineer', 'role'),
-            (exp['binds'][0], 'บริษัท ทดสอบออโต้เซฟ', 'company'),
-            (exp['binds'][3], 'บรรทัดผลงานที่พิมพ์เอง 123%', 'experience bullet'),
             (prj['binds'][0], 'โปรเจกต์ที่พิมพ์เอง', 'project name'),
+            (prj['binds'][1], 'รายละเอียดโปรเจกต์ที่พิมพ์เอง ไม่มีตัวเลขผลลัพธ์', 'project detail'),
             (skills['binds'][0], 'Go, PostgreSQL, Kubernetes', 'skills'),
         ]
         for bind, text, label in plan:
@@ -83,10 +82,11 @@ def main():
         else:
             d = json.loads(stored_raw).get('th', {})
             checks = [('name', d.get('name')), ('role', d.get('role')),
-                      ('exp[0].company', (d.get('exp') or [{}])[0].get('company')),
-                      ('exp[0].points', (d.get('exp') or [{}])[0].get('points')),
                       ('projects[0].name', (d.get('projects') or [{}])[0].get('name')),
+                      ('projects[0].desc', (d.get('projects') or [{}])[0].get('desc')),
                       ('skills', d.get('skills'))]
+            if 'exp' in d:
+                fails.append('retired section "exp" is still present in the saved data')
             for label, val in checks:
                 good = bool(val)
                 print(f"  stored {label:<16} {'OK' if good else 'MISSING'}")

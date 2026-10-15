@@ -17,22 +17,16 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 EXTREME = {
   "th": {"name":"ทดสอบ ข้อมูลยาวมาก","role":"Engineer","team":"Team","headline":"ทดสอบการย่ออัตโนมัติเมื่อข้อมูลเยอะเกินหนึ่งหน้า",
-         "exp":[{"company":f"บริษัท ทดสอบ {i}","role":"ตำแหน่ง","period":"2566–ปัจจุบัน",
-                 "points":"\n".join([f"ผลงานบรรทัดที่ {j} ของรายการที่ {i} พร้อมตัวเลขวัดผล 123%" for j in range(1,15)])}
-                for i in range(1,6)],
-         "projects":[{"name":f"โปรเจกต์ {i}","desc":"รายละเอียดโปรเจกต์ที่ยาวมาก " * 8,"impact":"ผลลัพธ์วัดได้ 50%"} for i in range(1,4)],
-         "skills":"\n".join([f"ทักษะที่ {i}" for i in range(1,26)]),
+         "projects":[{"name":f"โปรเจกต์ {i}","desc":"รายละเอียดโปรเจกต์ที่ยาวมาก " * 30} for i in range(1,9)],
+         "skills":"\n".join([f"ทักษะที่ {i}" for i in range(1,40)]),
          "strengths":"จุดแข็งหนึ่ง\nจุดแข็งสอง\nจุดแข็งสาม",
-         "path":"เส้นทางที่อยากไป " * 6, "targetTeams":"Platform / SRE",
+         "path":"เส้นทางที่อยากไป " * 25,
          "email":"a@b.com","phone":"0800000000","line":"@x","portfolio":"github.com/x"},
   "en": {"name":"Extreme Test","role":"Engineer","team":"Team","headline":"Auto-fit behaviour under heavy content load",
-         "exp":[{"company":f"Test Corp {i}","role":"Role","period":"2023–present",
-                 "points":"\n".join([f"Achievement line {j} of item {i} with measured numbers 123%" for j in range(1,15)])}
-                for i in range(1,6)],
-         "projects":[{"name":f"Project {i}","desc":"A very long project description " * 8,"impact":"Measured outcome 50%"} for i in range(1,4)],
-         "skills":"\n".join([f"Skill {i}" for i in range(1,26)]),
+         "projects":[{"name":f"Project {i}","desc":"A very long project description " * 30} for i in range(1,9)],
+         "skills":"\n".join([f"Skill {i}" for i in range(1,40)]),
          "strengths":"Strength one\nStrength two\nStrength three",
-         "path":"Career direction " * 6, "targetTeams":"Platform / SRE",
+         "path":"Career direction " * 25,
          "email":"a@b.com","phone":"0800000000","line":"@x","portfolio":"github.com/x"},
 }
 
@@ -118,7 +112,7 @@ def main():
         # ---- case D: exotic-but-normal characters must not fall back to a system font ----
         SPECIAL = json.loads(json.dumps(EXTREME))
         SPECIAL['th']['headline'] = 'งบ ฿1,200,000 → ลด 18% » ผ่าน • ทีม ← ปี 2566–2569'
-        SPECIAL['th']['exp'][0]['points'] = 'ใช้จ่าย ฿45,000 → คืน 2% ↑ · ปิดงาน 100%'
+        SPECIAL['th']['projects'][0]['desc'] = 'ใช้จ่าย ฿45,000 → คืน 2% ↑ · ปิดงาน 100%'
         SPECIAL['th']['skills'] = 'Go · Python · ฿งบประมาณ → roadmap'
         pg.evaluate("d => localStorage.setItem('hermes.careerSummary.v1', JSON.stringify(d))", SPECIAL)
         pg.reload(); pg.wait_for_timeout(600)

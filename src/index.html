@@ -195,12 +195,10 @@ const LANG_LABEL = {th:'ภาษาไทย', en:'English'};
 
 function blankLang(){ return {
   name:'', role:'', team:'', headline:'',
-  exp:[blankExp()],
   projects:[blankProject()],
   skills:'', strengths:'', path:'', targetTeams:'',
   email:'', phone:'', line:'', portfolio:''
 };}
-function blankExp(){ return {company:'', role:'', period:'', points:''}; }
 function blankProject(){ return {name:'', desc:''}; }
 function blank(){ const o={}; LANGS.forEach(l=>o[l]=blankLang()); return o; }
 
@@ -211,25 +209,19 @@ const SECTIONS = [
     {k:'team',  t:'text',     th:'ทีม / ฝ่าย', en:'Team / Department'},
     {k:'headline', t:'area', rows:2, th:'สรุปสั้น 2 บรรทัด (ไม่ใส่ก็ได้)', en:'Short summary, 2 lines (optional)'}
   ]},
-  {key:'exp', num:'01', th:'ประสบการณ์ทำงาน', en:'Experience', repeat:'exp', addTh:'+ เพิ่มประสบการณ์', max:4, fields:[
-    {k:'company', t:'text', th:'บริษัท / หน่วยงาน', en:'Company'},
-    {k:'role',    t:'text', th:'ตำแหน่ง', en:'Role'},
-    {k:'period',  t:'text', th:'ช่วงเวลา (เช่น 2566–ปัจจุบัน)', en:'Period (e.g. 2023–present)'},
-    {k:'points',  t:'area', rows:3, th:'ผลงาน / ความรับผิดชอบ', en:'Achievements / scope',
-     hint:'1 บรรทัด = 1 ข้อ · ใส่ตัวเลขที่วัดได้ถ้ามี'}
-  ]},
-  {key:'projects', num:'02', th:'โปรเจกต์เด่น', en:'Highlight projects', repeat:'projects', addTh:'+ เพิ่มโปรเจกต์', max:3, fields:[
+  {key:'projects', num:'01', th:'โปรเจกต์เด่น', en:'Highlight projects', repeat:'projects',
+   newItem:blankProject, addTh:'+ เพิ่มโปรเจกต์', max:4, fields:[
     {k:'name',   t:'text', th:'ชื่อโปรเจกต์', en:'Project name'},
     {k:'desc',   t:'area', rows:3, th:'รายละเอียดโปรเจกต์ / บทบาทของคุณ', en:'Project detail / your role',
      hint:'เล่ารายละเอียดงานได้เต็มที่ ไม่ต้องมีตัวเลขผลลัพธ์'}
   ]},
-  {key:'skills', num:'03', th:'ทักษะ', en:'Skills', fields:[
+  {key:'skills', num:'02', th:'ทักษะ', en:'Skills', fields:[
     {k:'skills', t:'area', rows:3, th:'ทักษะ', en:'Skills', hint:'1 บรรทัด = 1 ทักษะ'}
   ]},
-  {key:'strengths', num:'04', th:'จุดแข็ง 3 ข้อ', en:'Top 3 strengths', fields:[
+  {key:'strengths', num:'03', th:'จุดแข็ง 3 ข้อ', en:'Top 3 strengths', fields:[
     {k:'strengths', t:'area', rows:3, th:'จุดแข็ง', en:'Strengths', hint:'ใส่ไม่เกิน 3 บรรทัด'}
   ]},
-  {key:'path', num:'05', th:'ความสนใจ / เส้นทางที่อยากไป', en:'Interests / career path', fields:[
+  {key:'path', num:'04', th:'ความสนใจ / เส้นทางที่อยากไป', en:'Interests / career path', fields:[
     {k:'path', t:'area', rows:4, th:'ความสนใจ & เส้นทาง', en:'Interests & path'}
   ]},
   {key:'contact', num:'', th:'ช่องทางติดต่อ', en:'Contact', fields:[
@@ -348,12 +340,11 @@ editor.addEventListener('click', e=>{
   if(t.dataset.tab){ lang = t.dataset.tab; renderEditor(); renderPreview(); updateLangButtons(); return; }
   if(t.dataset.add){
     const s = SECTIONS.find(x=>x.key===t.dataset.add);
-    const blankItem = s.key==='exp'?blankExp():blankProject();
-    data[lang][s.key].push(blankItem); dirty = true; renderEditor(); renderPreview(); saveNow(); return;
+    data[lang][s.key].push(s.newItem()); dirty = true; renderEditor(); renderPreview(); saveNow(); return;
   }
   if(t.dataset.del){
     const k = t.dataset.del, i = +t.dataset.i;
-    data[lang][k].splice(i,1); if(!data[lang][k].length) data[lang][k].push(k==='exp'?blankExp():blankProject());
+    data[lang][k].splice(i,1); if(!data[lang][k].length) data[lang][k].push(SECTIONS.find(x=>x.key===k).newItem());
     dirty = true; renderEditor(); renderPreview(); saveNow(); return;
   }
   if(t.dataset.copy){
@@ -388,20 +379,12 @@ function lines(v){ return String(v||'').split('\n').map(x=>x.trim()).filter(Bool
 function renderPreview(){
   const d = data[lang];
   const t = lang==='th'
-    ? {kick:'สรุปประสบการณ์ · เอกสารภายใน', exp:'ประสบการณ์ทำงาน', pj:'โปรเจกต์เด่น', sk:'ทักษะ', st:'จุดแข็ง', path:'ความสนใจ / เส้นทาง', empty:'— เริ่มพิมพ์ทางซ้าย เพื่อดูเอกสารจริงหน้านี้ —'}
-    : {kick:'Career summary · internal document', exp:'Experience', pj:'Highlight projects', sk:'Skills', st:'Strengths', path:'Interests / path', empty:'— start typing on the left to see the live document —'};
+    ? {kick:'สรุปประสบการณ์ · เอกสารภายใน', pj:'โปรเจกต์เด่น', sk:'ทักษะ', st:'จุดแข็ง', path:'ความสนใจ / เส้นทาง', empty:'— เริ่มพิมพ์ทางซ้าย เพื่อดูเอกสารจริงหน้านี้ —'}
+    : {kick:'Career summary · internal document', pj:'Highlight projects', sk:'Skills', st:'Strengths', path:'Interests / path', empty:'— start typing on the left to see the live document —'};
+  let secNo = 0; const num = () => String(++secNo).padStart(2, '0');   // numbering follows render order
 
   const contacts = [d.email,d.phone,d.line,d.portfolio].map(x=>String(x||'').trim()).filter(Boolean);
   const hasAny = (d.name||d.role||d.team||d.headline||contacts.length||lines(d.skills).length);
-
-  const expHTML = d.exp.filter(e=>e.company||e.role||e.points).map(e=>{
-    const pts = lines(e.points);
-    return `<div class="exp">
-      <div class="row"><span class="co">${esc(e.company||'')}</span><span class="per">${esc(e.period||'')}</span></div>
-      ${e.role?`<div class="rl">${esc(e.role)}</div>`:''}
-      ${pts.length?`<ul>${pts.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`:''}
-    </div>`;
-  }).join('');
 
   const pjHTML = d.projects.filter(p=>p.name||p.desc).map(p=>`<div class="pj">
       <div class="nm">${esc(p.name||'')}</div>
@@ -422,17 +405,16 @@ function renderPreview(){
     ${hasAny?'':`<div class="empty-doc">${t.empty}</div>`}
     <div class="cols">
       <div class="colL">
-        <div class="sec-d" data-sec="exp"><h4><span class="n">01</span>${t.exp}</h4>${expHTML||'<div class="body">—</div>'}</div>
-        <div class="sec-d" data-sec="pj"><h4><span class="n">02</span>${t.pj}</h4>${pjHTML||'<div class="body">—</div>'}</div>
+        <div class="sec-d" data-sec="pj"><h4><span class="n">${num()}</span>${t.pj}</h4>${pjHTML||'<div class="body">—</div>'}</div>
       </div>
       <div class="colR">
-        <div class="sec-d" data-sec="sk"><h4><span class="n">03</span>${t.sk}</h4>
+        <div class="sec-d" data-sec="sk"><h4><span class="n">${num()}</span>${t.sk}</h4>
           ${skills.length?`<div class="chips">${skills.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>`:'<div class="body">—</div>'}
         </div>
-        <div class="sec-d" data-sec="st"><h4><span class="n">04</span>${t.st}</h4>
+        <div class="sec-d" data-sec="st"><h4><span class="n">${num()}</span>${t.st}</h4>
           ${strengths.length?`<ul class="str">${strengths.map((s,i)=>`<li data-i="${i+1}.">${esc(s)}</li>`).join('')}</ul>`:'<div class="body">—</div>'}
         </div>
-        <div class="sec-d" data-sec="path"><h4><span class="n">05</span>${t.path}</h4>
+        <div class="sec-d" data-sec="path"><h4><span class="n">${num()}</span>${t.path}</h4>
           ${lines(d.path).length?`<div class="body">${lines(d.path).map(l=>esc(l)).join('<br>')}</div>`:'<div class="body">—</div>'}
         </div>
       </div>
@@ -530,12 +512,6 @@ document.getElementById('btnDemo').addEventListener('click', ()=>{
 const DEMO = {
   th:{name:'สมชาย ตัวอย่าง', role:'Senior Backend Engineer', team:'Platform Engineering · ตัวอย่าง',
       headline:'ดูแลระบบ backend ที่มีผู้ใช้หลักแสนคน/วัน โฟกัส performance และ reliability',
-      exp:[
-        {company:'บริษัท ตัวอย่าง จำกัด', role:'Senior Backend Engineer', period:'2566–ปัจจุบัน',
-         points:'ออกแบบ queue-based pipeline ลดเวลา process จาก 40 นาที → 6 นาที (ลด 85%)\nดูแล API 12 บริการ uptime 99.95% ตลอดปี\nนำ CI/CD + test coverage จาก 30% → 78%'},
-        {company:'บริษัท สมมติ จำกัด', role:'Backend Developer', period:'2563–2566',
-         points:'รีไรต์ระบบบิลล์จาก monolith → service ย่อย ลด cost server 30%\nดูแลทีม 3 คน ส่งงานตรงเวลา 100% ของ sprint'}
-      ],
       projects:[
         {name:'ระบบ payment gateway ภายใน', desc:'ออกแบบ idempotency + retry ให้รองรับ 5,000 TPS และทำ runbook ให้ทีมอื่นดูแลต่อได้'},
         {name:'Observability stack', desc:'รวม log/metric/trace เป็นชุดเดียวทั้งบริษัท พร้อม dashboard ประจำทีม'}
@@ -546,12 +522,6 @@ const DEMO = {
       email:'somchai.example@example.com', phone:'08x-xxx-xxxx', line:'@example', portfolio:'github.com/example'},
   en:{name:'Somchai Sample', role:'Senior Backend Engineer', team:'Platform Engineering · Sample',
       headline:'Backend engineer running services for ~100k daily users, focused on performance and reliability',
-      exp:[
-        {company:'Sample Co., Ltd.', role:'Senior Backend Engineer', period:'2023–present',
-         points:'Designed a queue-based pipeline, cutting processing time 40 min → 6 min (−85%)\nOwned 12 APIs at 99.95% uptime for the year\nRaised CI/CD test coverage from 30% → 78%'},
-        {company:'Mock Co., Ltd.', role:'Backend Developer', period:'2020–2023',
-         points:'Broke a billing monolith into services, cutting server cost 30%\nLed 3 engineers, 100% of sprints delivered on time'}
-      ],
       projects:[
         {name:'Internal payment gateway', desc:'Idempotency and retry design for 5,000 TPS, plus a runbook the team can own'},
         {name:'Observability stack', desc:'Unified logging, metrics and tracing company-wide with per-team dashboards'}

@@ -75,7 +75,7 @@ def main():
 
         # retired fields must be gone from the document (target team + measurable outcome)
         ptext = pg.evaluate("() => document.getElementById('fit').innerText")
-        for bad in ('ทีมเป้าหมาย', 'Target team', '0.4% → 0.01%', 'Duplicate-payment errors'):
+        for bad in ('ทีมเป้าหมาย', 'Target team', 'ประสบการณ์ทำงาน', '0.4% → 0.01%', 'Duplicate-payment errors'):
             if bad in ptext:
                 fails.append(f'retired content is still rendered: {bad!r}')
         if 'ออกแบบ idempotency' not in ptext:
