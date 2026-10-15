@@ -41,10 +41,18 @@ python3 build.py                 # สร้าง dist/index.html
 pwpy tests/check_a4.py           # เทส PDF A4 จริง (ต้องมี pwpy = playwright python)
 ```
 
+`tests/check_live.py` = เทสเว็บจริงที่ deploy แล้ว (`pwpy tests/check_live.py`): HTTP 200 ผ่าน Cloudflare,
+หน้าโหลด 0 request ออกนอก, ข้อมูลลง localStorage, และ PDF จากเว็บจริง = 1 หน้า A4 ฟอนต์ฝังครบ
+
 `tests/check_a4.py` ตรวจ 4 เคส: ว่าง / ข้อมูลตัวอย่าง (ไทย+EN) / ล้นเกิน 70% / อักขระพิเศษ (฿ → » • ← ↑ ·)
 เกณฑ์ผ่าน: **PDF = 1 หน้า A4**, ข้อความคัดลอกได้, **ไม่มีฟอนต์ระบบหลุดเข้าไปใน PDF**, ไม่มี console error
 
 ## Deploy
 
-Dokploy (home server) → static app จาก repo นี้ (Dockerfile) → โดเมน `profile.mysterchat.com`
-ไม่มี CF Access (public ตามที่เลือกไว้) — ถ้าอนาคตต้องการปิด ให้เพิ่ม Access app ที่โดเมนนี้แล้วเปิด policy email
+Dokploy (home server) → static app จาก repo นี้ (buildType `dockerfile`, port 80) → โดเมน `profile.mysterchat.com`
+- Dokploy: project `profile-summary` → application `career-summary` (`8P_N7YRjVVc6Nn45M-fwM`), appName `profile-summary-4afnsy`
+- DNS: CNAME `profile` → `ca17f740-9321-4176-b767-c50136830229.cfargotunnel.com` (tunnel "server", proxied)
+- Tunnel ingress: `profile.mysterchat.com → https://192.168.1.105:443` (originServerName ตั้งเป็น host นี้)
+- ไม่มี CF Access (public ตามที่เลือกไว้) — ถ้าอนาคตต้องการปิด ให้เพิ่ม Access app ที่โดเมนนี้แล้วเปิด policy email
+
+อัปเดตเว็บ: แก้ `src/index.html` → `python3 build.py` → commit/push → กด Redeploy ใน Dokploy (หรือ `POST /api/application.deploy`)
