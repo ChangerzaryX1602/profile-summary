@@ -46,6 +46,9 @@ button.ghost{background:transparent}
 .seg button{border:0; border-radius:0; padding:7px 14px}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--ink); color:#fff}
+.savestate{margin-left:auto; font-size:11.5px; color:var(--ok); display:flex; align-items:center; gap:6px; white-space:nowrap}
+.savestate::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+.savestate.warn{color:var(--warn)}
 
 /* ---------- warn bar ---------- */
 .warn{display:none; gap:10px; align-items:flex-start; margin:12px 16px 0; padding:10px 14px;
@@ -171,6 +174,7 @@ button.ghost{background:transparent}
   <button id="btnImport">นำเข้า JSON</button>
   <button id="btnDemo" class="ghost">ใส่ข้อมูลตัวอย่าง</button>
   <button id="btnClear" class="danger">ล้างข้อมูลในเครื่อง</button>
+  <span id="saveState" class="savestate" title="บันทึกอัตโนมัติลง localStorage ของเบราว์เซอร์นี้">พร้อมใช้งาน</span>
   <input type="file" id="fileIn" accept=".json,application/json" hidden>
 </div>
 
@@ -266,9 +270,38 @@ function merge(base, incoming){
   return base;
 }
 let saveTimer = null;
-function save(){
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(()=>{ try{ localStorage.setItem(LS_KEY, JSON.stringify(data)); }catch(e){} }, 250);
+const saveStateEl = document.getElementById('saveState');
+function stamp(){ return new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit', second:'2-digit'}); }
+function saveNow(){
+  clearTimeout(saveTimer); saveTimer = null;
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+    if(saveStateEl){ saveStateEl.classList.remove('warn'); saveStateEl.textContent = 'บันทึกแล้ว ' + stamp(); }
+    return true;
+  }catch(e){
+    if(saveStateEl){ saveStateEl.classList.add('warn'); saveStateEl.textContent = 'บันทึกอัตโนมัติใช้ไม่ได้ (โหมดส่วนตัว?) — กด “บันทึก JSON” เก็บไว้'; }
+    return false;
+  }
+}
+function save(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 200); }
+// never lose the last keystrokes: flush on tab hide / unload / blur
+window.addEventListener('pagehide', saveNow);
+window.addEventListener('beforeunload', saveNow);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') saveNow(); });
+window.addEventListener('blur', saveNow);
+let previewTimer = null;
+function schedulePreview(){ clearTimeout(previewTimer); previewTimer = setTimeout(renderPreview, 70); }
+/* bind paths: flat sections store their fields at the top level of the language
+   object (data.th.name), repeatable sections store them inside an array element
+   (data.th.exp[0].company) — a flattened "section.field" key silently wrote onto
+   the array object itself, which JSON.stringify then dropped. */
+function setPath(root, path, val){
+  const p = path.split('.'); let cur = root;
+  for(let i = 0; i < p.length - 1; i++){ cur = cur[p[i]]; if(cur == null) return false; }
+  cur[p[p.length - 1]] = val; return true;
+}
+function getPath(root, path){
+  return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), root);
 }
 
 /* ============================ editor ============================ */
@@ -287,26 +320,27 @@ function renderEditor(){
       L[s.key].forEach((it,idx)=>{ h += itemHTML(s, it, idx, L[s.key].length); });
       if(L[s.key].length < s.max) h += `<button class="add" data-add="${s.key}">${s.addTh}</button>`;
     } else {
-      s.fields.forEach(f=>{ h += fieldHTML(s.key, f, L[f.k]); });
+      s.fields.forEach(f=>{ h += fieldHTML(s, f, L[f.k], null); });
     }
     h += `</div>`;
   });
   editor.innerHTML = h;
 }
-function fieldHTML(sectionKey, f, val){
+function fieldHTML(s, f, val, idx){
   const label = lang==='th'?f.th:f.en;
   const hint = f.hint?`<span class="hint">${f.hint}</span>`:'';
+  const path = (s.repeat && idx !== null) ? `${s.key}.${idx}.${f.k}` : f.k;
   const copyBtn = (f.t==='text'||f.t==='area') && lang==='th'
-    ? `<button class="copyen" data-copy="${sectionKey}.${f.k}" title="คัดลอกค่านี้ไปช่อง EN">TH » EN</button>` : '';
+    ? `<button class="copyen" data-copy="${path}" title="คัดลอกค่านี้ไปช่อง EN">TH » EN</button>` : '';
   const input = f.t==='area'
-    ? `<textarea rows="${f.rows||3}" data-bind="${sectionKey}.${f.k}">${esc(val)}</textarea>`
-    : `<input type="text" data-bind="${sectionKey}.${f.k}" value="${esc(val)}">`;
+    ? `<textarea rows="${f.rows||3}" data-bind="${path}">${esc(val)}</textarea>`
+    : `<input type="text" data-bind="${path}" value="${esc(val)}">`;
   return `<div class="f"><label><span>${label} ${hint}</span>${copyBtn}</label>${input}</div>`;
 }
 function itemHTML(s, it, idx, total){
   const title = (lang==='th'?'รายการ':'Item') + ' ' + (idx+1);
   let h = `<div class="item"><div class="ih"><span>${title}</span>${total>1?`<button class="danger" data-del="${s.key}" data-i="${idx}">ลบ</button>`:''}</div>`;
-  s.fields.forEach(f=>{ h += fieldHTML(s.key, f, it[f.k], idx); });
+  s.fields.forEach(f=>{ h += fieldHTML(s, f, it[f.k], idx); });
   return h + `</div>`;
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -325,16 +359,19 @@ editor.addEventListener('click', e=>{
     renderEditor(); renderPreview(); save(); return;
   }
   if(t.dataset.copy){
-    const [sec,k] = t.dataset.copy.split('.');
-    const v = data.th[sec][k]; data.en[sec][k] = v; save(); renderEditor(); renderPreview();
-    flash(t, 'คัดลอกแล้ว'); return;
+    const path = t.dataset.copy;
+    const ok = setPath(data.en, path, getPath(data.th, path) ?? '');
+    saveNow(); renderEditor(); renderPreview();
+    flash(t, ok ? 'คัดลอกแล้ว' : 'คัดลอกไม่ได้');
+    return;
   }
 });
 editor.addEventListener('input', e=>{
   const el = e.target.closest('[data-bind]'); if(!el) return;
-  const [sec,k] = el.dataset.bind.split('.');
-  data[lang][sec][k] = el.value; save(); renderPreview();
+  setPath(data[lang], el.dataset.bind, el.value);
+  save(); schedulePreview();          // preview follows the keystroke; storage follows 200 ms later
 });
+editor.addEventListener('change', e=>{ if(e.target.closest('[data-bind]')) saveNow(); });
 function flash(btn, msg){ const old=btn.textContent; btn.textContent=msg; setTimeout(()=>btn.textContent=old, 900); }
 
 /* copy whole TH tree -> EN */
